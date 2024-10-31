@@ -21,6 +21,7 @@ Function Get-InstalledApplication {
     $reg = [microsoft.win32.registrykey]::OpenRemoteBaseKey('LocalMachine', $PCName)
     $regkey = $reg.OpenSubKey($uninstallKey) 
     $subkeys = $regkey.GetSubKeyNames() 
+    $intallPathValueNames = 'InstallSource', 'InstallLocation'
     $array = @()
     foreach ($key in $subkeys) {
         $thisKey = $uninstallKey + "\\" + $key 
@@ -34,18 +35,31 @@ Function Get-InstalledApplication {
 
         Write-Verbose "Adding member `"ComputerName`" with value `"$PCName`""
         $object | Add-Member -MemberType NoteProperty -Name "ComputerName" -Value $PCName
+        $isAdding = $true -and -not $Directories
         foreach ($valueName in $valueNames) {
             $value = $thisSubKey.GetValue($valueName)
             if (-not $value) {
                 continue
             }
 
+            if ($Directories) {
+                if ($intallPathValueNames.Contains($valueName)) {
+                    foreach ($directory in $Directories) {
+                        if ($value.Contains($directory)) {
+                            $isAdding = $true
+                        }
+                    }
+                }
+            }
+
             Write-Verbose "Adding member `"$valueName`" with value `"$value`""
             $object | Add-Member -MemberType NoteProperty -Name $valueName -Value $value
         }
 
-        Write-Verbose "Adding new object to array"
-        $array += $object
+        if ($isAdding) {
+            Write-Verbose "Adding new object to array"
+            $array += $object
+        }
     } 
 
     $array
@@ -53,7 +67,7 @@ Function Get-InstalledApplication {
 
 
 $InstalledApplicationParameters = @{
-    # PCName = Invoke-Expression -Command 'hostname'
-    PCName = $env:ComputerName
+    PCName      = $env:ComputerName
+    Directories = 'D:\', 'C:\'
 }
 Get-InstalledApplication @InstalledApplicationParameters
