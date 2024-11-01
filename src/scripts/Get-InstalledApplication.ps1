@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+Returns information about installed applications.
+
+.DESCRIPTION
+Searches the registry along the path SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall for the sent PC name for all installed applications.
+After which it takes all the necessary applications that are located in a certain directory if the $Directories parameter was set.
+
+.PARAMETER PCName
+The name of the PC on which installed applications will be searched.
+
+.PARAMETER Directories
+An array of paths along which the required installed applications will be selected.
+
+.EXAMPLE
+Get-InstalledApplication -PCName -Directories 'C:\', 'D:\'
+#>
 Function Get-InstalledApplication {
     [CmdletBinding()]
     [OutputType([PSObject])]
@@ -35,19 +52,17 @@ Function Get-InstalledApplication {
 
         Write-Verbose "Adding member `"ComputerName`" with value `"$PCName`""
         $object | Add-Member -MemberType NoteProperty -Name "ComputerName" -Value $PCName
-        $isAdding = $true -and -not $Directories
+        $isAdding = -not $Directories
         foreach ($valueName in $valueNames) {
             $value = $thisSubKey.GetValue($valueName)
             if (-not $value) {
                 continue
             }
 
-            if ($Directories) {
-                if ($intallPathValueNames.Contains($valueName)) {
-                    foreach ($directory in $Directories) {
-                        if ($value.Contains($directory)) {
-                            $isAdding = $true
-                        }
+            if ($intallPathValueNames.Contains($valueName)) {
+                foreach ($directory in $Directories) {
+                    if ($value.Contains($directory)) {
+                        $isAdding = $true
                     }
                 }
             }
@@ -64,10 +79,3 @@ Function Get-InstalledApplication {
 
     $array
 }
-
-
-$InstalledApplicationParameters = @{
-    PCName      = $env:ComputerName
-    Directories = 'D:\', 'C:\'
-}
-Get-InstalledApplication @InstalledApplicationParameters
