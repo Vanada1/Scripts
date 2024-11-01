@@ -1,9 +1,11 @@
 # Scripts
 
-## Сode style
+## Code style
 
 ### Правила именования и применения стилей
+
 Глагол лучше всего выбрать из утвержденного списка, который можно просмотреть при помощи команды [`Get-Verb`](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/09-functions?view=powershell-7.4). Существительное должно быть в единственном числе (например, `Get-Command`, а не `Get-Commands`).
+
 ```powershell
 <#
 .SYNOPSIS
