@@ -13,7 +13,7 @@ $module = @{
     ModuleVersion = "1.0.0.0"
     Author        = "Vladimir Shvoev"
     PSVersion     = '7.0'
-    OutputPath    = 'E:\Code\Scripts\Scripts\src\building-scripts\release'
+    OutputPath    = Join-Path $buildModuleScriptPath 'release'
 }
 $modulePath = New-ModuleTemplate @module
 if ($modulePath -is [array]) {
