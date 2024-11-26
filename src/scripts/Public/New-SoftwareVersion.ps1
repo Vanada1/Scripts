@@ -1,6 +1,6 @@
 Function New-SoftwareVersion {
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType([string])]
 
     param (
         [Parameter(Mandatory = $true)]
@@ -15,13 +15,13 @@ Function New-SoftwareVersion {
         [switch]$ReleaseCandidate,
 
         [Parameter(Mandatory = $false)]
-        [string]$ReleaseCandidateLastVersion,
+        [int]$ReleaseCandidateLastVersion,
 
         [Parameter(Mandatory = $false)]
         [switch]$Build,
         
         [Parameter(Mandatory = $false)]
-        [string]$BuildVersion
+        [int]$BuildVersion
     )
 
     $availableIncrementVersionType = @(
@@ -31,6 +31,7 @@ Function New-SoftwareVersion {
         Write-Error "$IncrementVersionType is not available version type. You must use the following available types: $availableIncrementVersionType" -ErrorAction Stop
     }
 
+    # Условия для установки версий https://semver.org/
     $regexString = '^(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+)+(?<pre_release>(\-\w+\.\d+)?)(\+(?<build>\d+))?$'
     $newVersion = ''
 
