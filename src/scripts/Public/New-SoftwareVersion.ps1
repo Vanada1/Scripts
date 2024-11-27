@@ -1,54 +1,92 @@
+<#
+.SYNOPSIS
+Increases the application version.
+
+.DESCRIPTION
+Increases the application version. When sending the current version,
+you can choose which part of the version you want to increase (if necessary).
+You can also install the pre-release version or the build version, or both.
+
+.PARAMETER CurrentVersion
+Current application version.
+
+.PARAMETER IncrementVersionType
+The type of version being modified. Can be Major, Minor or Patch.
+
+.PARAMETER PreRelease
+Adding a pre-release version.
+
+.PARAMETER PreReleaseVersion
+Meaning of pre-release version.
+
+.PARAMETER Build
+Adding a build number.
+
+.PARAMETER BuildVersion
+Build number value.
+
+.EXAMPLE
+New-SoftwareVersion -CurrentVersion '1.0.0'
+New-SoftwareVersion -CurrentVersion '1.0.0' -IncrementVersionType 'Major'
+New-SoftwareVersion -CurrentVersion '1.0.0' -IncrementVersionType 'Minor'
+New-SoftwareVersion -CurrentVersion '1.0.0' -IncrementVersionType 'Patch'
+New-SoftwareVersion -CurrentVersion '1.0.0' -PreRelease -PreReleaseVersion 'rc.1'
+New-SoftwareVersion -CurrentVersion '1.0.0' -PreRelease -PreReleaseVersion 'rc.1' -Build '1234567'
+New-SoftwareVersion -CurrentVersion '1.0.0' -IncrementVersionType 'Major' -PreRelease -PreReleaseVersion 'rc.1' -Build '1234567'
+
+.NOTES
+Conditions for installing versions of https://semver.org/
+#>
 Function New-SoftwareVersion {
     [CmdletBinding()]
     [OutputType([string])]
 
     param (
         [Parameter(Mandatory = $true)]
-        [string]$LastVersion,
+        [string]$CurrentVersion,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$IncrementVersionType,
         
-        # TODO: Возможно, вместо использования только релиза кандидата, использовать более гибкую структуру,
-        # чтобы можно было работать с другими вариантами версий (например, alpha или beta релизы)
         [Parameter(Mandatory = $false)]
-        [switch]$ReleaseCandidate,
+        [switch]$PreRelease,
 
         [Parameter(Mandatory = $false)]
-        [int]$ReleaseCandidateLastVersion,
+        [string]$PreReleaseVersion,
 
         [Parameter(Mandatory = $false)]
         [switch]$Build,
         
         [Parameter(Mandatory = $false)]
-        [int]$BuildVersion
+        [string]$BuildVersion
     )
 
-    $availableIncrementVersionType = @(
-        'Major', 'Minor', 'Patch', 'ReleaseCandidate', 'M', 'm', 'p', 'rc')
+    $regexString = '(?<major>(0|[1-9]\d*))\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<pre_release>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)))?(?:\+(?<build>(?:[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)))?'
+    $matches = [regex]::Matches($CurrentVersion, $regexString)
+    $match = $matches[0]
 
-    if (-not $availableIncrementVersionType.Contains($IncrementVersionType)) {
-        Write-Error "$IncrementVersionType is not available version type. You must use the following available types: $availableIncrementVersionType" -ErrorAction Stop
-    }
+    $major = [int]$match.Groups['major'].Value
+    $minor = [int]$match.Groups['minor'].Value
+    $patch = [int]$match.Groups['patch'].Value
 
-    # Условия для установки версий https://semver.org/
-    $regexString = '^(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+)+(?<pre_release>(\-\w+\.\d+)?)(\+(?<build>\d+))?$'
-    $newVersion = ''
-
-    if ($IncrementVersionType -eq 'Major' -or $IncrementVersionType -eq 'M') {
-
-    }
-    
-    if ($IncrementVersionType -eq 'Minor' -or $IncrementVersionType -eq 'm') {
-        
+    if ($IncrementVersionType -eq 'Major') {
+        $major += 1
+        $minor = 0
+        $patch = 0
     }
     
-    if ($IncrementVersionType -eq 'Patch' -or $IncrementVersionType -eq 'p') {
-        
+    if ($IncrementVersionType -eq 'Minor') {
+        $minor += 1
+        $patch = 0
+    }
+    
+    if ($IncrementVersionType -eq 'Patch') {
+        $patch += 1
     }
 
-    if ($ReleaseCandidate -and ($IncrementVersionType -eq 'ReleaseCandidate' -or $IncrementVersionType -eq 'rc')) {
-        
+    $newVersion = "$major.$minor.$patch"
+    if ($PreRelease) {
+        $newVersion += "-$PreReleaseVersion"
     }
 
     if ($Build) {
